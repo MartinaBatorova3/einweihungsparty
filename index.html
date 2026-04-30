@@ -846,8 +846,12 @@ function reset() {
 
 els.btnStart.addEventListener('click', startCamera);
 els.btnMic.addEventListener('click', () => {
+  if ('speechSynthesis' in window) {
+    const unlock = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(unlock);
+  }
   if (isRecording) {
-    autoMode = false; // user explicitly stopping the loop
+    autoMode = false;
     stopRecording();
   } else {
     startRecording();
