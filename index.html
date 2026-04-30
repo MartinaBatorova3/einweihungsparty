@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EINWEIHUNGSPARTY // TÜRPOLITIK</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@700;800;900&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%; width: 100%; overflow: hidden;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  background: #000; color: #f0f0f0;
+  user-select: none; -webkit-font-smoothing: antialiased;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ============ 9:16 STAGE ============ */
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  /* lock to 9:16 — letterbox on wide screens, fill on tall */
+  max-width: calc(100vh * 9 / 16);
+  max-height: calc(100vw * 16 / 9);
+  background: #000;
+  overflow: hidden;
+}
+
+/* concrete grain */
+.stage::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 90;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay; opacity: 0.45;
+}
+
+/* scan lines */
+.stage::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 91;
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,.018) 2px 3px);
+}
+
+/* ============ WEBCAM (always-on background) ============ */
+#webcam {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  background: #0a0a0a;
+  filter: contrast(1.05) brightness(0.78) saturate(0.7);
+  z-index: 1;
+}
+
+/* dark vignettes */
+.vignette-top {
+  position: absolute; top: 0; left: 0; right: 0; height: 28%;
+  pointer-events: none; z-index: 2;
+  background: linear-gradient(to bottom, rgba(0,0,0,.85) 0%, rgba(0,0,0,0) 100%);
+}
+.vignette-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 35%;
+  pointer-events: none; z-index: 2;
+  background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,0) 100%);
+}
+
+/* ============ BOUNCER (always-on, transparent PNG) ============ */
+.bouncer-wrap {
+  position: absolute;
+  bottom: 13%;
+  right: 4%;
+  width: 43%;
+  pointer-events: none;
+  z-index: 5;
+  filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.6));
+  transition: filter 0.4s, transform 0.3s;
+}
+
+.bouncer-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: opacity 0.45s ease-out;
+}
+
+.bouncer-img.open {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.bouncer-img.closed { opacity: 1; }
+.bouncer-img.open { opacity: 0; }
+
+.bouncer-wrap.is-open .bouncer-img.closed { opacity: 0; }
+.bouncer-wrap.is-open .bouncer-img.open { opacity: 1; }
+
+/* punch-in animation when verdict shows */
+.bouncer-wrap.punch {
+  animation: bouncerPunch 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+@keyframes bouncerPunch {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); transform-origin: bottom right; }
+  100% { transform: scale(1); }
+}
+
+.bouncer-wrap.shake {
+  animation: bouncerShake 0.45s;
+}
+@keyframes bouncerShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px) rotate(-1deg); }
+  40% { transform: translateX(4px) rotate(1deg); }
+  60% { transform: translateX(-3px) rotate(-0.5deg); }
+  80% { transform: translateX(3px); }
+}
+
+/* ============ TOP BAR ============ */
+.topbar {
+  position: absolute; top: 2%; left: 4%; right: 4%;
+  padding: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.rec-group {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 2px; font-weight: 700;
+}
+.rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff0033; animation: blink 1.2s infinite; }
+@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: .15; } }
+.rec-text { color: #ff0033; }
+
+.counter {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 2px; font-weight: 700;
+}
+.counter .num { color: #ff0033; font-size: 12px; }
+
+/* ============ WORD ZONE ============ */
+.word-zone {
+  position: absolute; top: 5%; left: 4%; right: 4%;
+  text-align: center; z-index: 6;
+}
+.label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 4px;
+  text-transform: uppercase; color: #ff0033;
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; justify-content: center;
+}
+.label::before, .label::after {
+  content: ''; flex: 0 0 28px; height: 1px; background: #ff0033; opacity: .6;
+}
+.word {
+  font-size: clamp(22px, 7vw, 36px);
+  font-weight: 900; line-height: .95;
+  letter-spacing: -.03em; text-transform: uppercase;
+  text-shadow: 0 2px 14px rgba(0,0,0,.95), 0 0 24px rgba(0,0,0,.7);
+  word-break: break-word;
+}
+
+/* ============ VERDICT BANNER (overlays bouncer) ============ */
+.verdict-banner {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.85);
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.verdict-banner.show {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.verdict-text {
+  font-size: clamp(36px, 12vw, 68px);
+  font-weight: 900; letter-spacing: -.04em; line-height: .9;
+  text-transform: uppercase;
+  display: inline-block;
+  padding: 4px 14px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(2px);
+}
+.verdict-banner.fail .verdict-text {
+  color: #ff0033;
+  text-shadow: 0 0 24px rgba(255,0,51,.6);
+}
+.verdict-banner.success .verdict-text {
+  color: #f0f0f0;
+  text-shadow: 0 0 24px rgba(255,255,255,.4);
+}
+.verdict-banner.almost .verdict-text {
+  color: #ffaa00;
+}
+
+.verdict-quote {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(11px, 2.8vw, 14px);
+  letter-spacing: 1.5px;
+  margin-top: 10px;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.85);
+  display: inline-block;
+  padding: 6px 12px;
+  font-weight: 700;
+}
+
+/* strobe overlay */
+.strobe { position: absolute; inset: 0; pointer-events: none; z-index: 12; opacity: 0; }
+.strobe.flash-red { animation: flashRed .55s ease-out; }
+.strobe.flash-white { animation: flashWhite .4s ease-out; }
+@keyframes flashRed { 0% { background: rgba(255,0,51,.5); opacity: 1; } 100% { background: rgba(255,0,51,0); opacity: 0; } }
+@keyframes flashWhite { 0%, 30% { background: rgba(255,255,255,.55); opacity: 1; } 100% { background: rgba(255,255,255,0); opacity: 0; } }
+
+/* ============ BOTTOM PANEL — centered, full width ============ */
+.panel {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 10px 12px 16px;
+  z-index: 10;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.info-strip {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid rgba(240,240,240,.18);
+  border-bottom: 1px solid rgba(240,240,240,.18);
+  padding: 7px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding-left: 8px; padding-right: 8px;
+}
+.info-strip .key { opacity: .5; }
+.info-strip .val { color: #f0f0f0; font-weight: 700; }
+
+.heard {
+  border: 1px solid rgba(240,240,240,.2);
+  padding: 8px 10px;
+  min-height: 50px;
+  display: flex; flex-direction: column; justify-content: center;
+  transition: border-color .2s, background .2s;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.heard.success { border-color: #f0f0f0; background: rgba(255,255,255,.08); }
+.heard.fail { border-color: #ff0033; background: rgba(255,0,51,.15); }
+.heard.listening { border-color: #ff0033; animation: listenPulse 1s infinite; }
+@keyframes listenPulse {
+  0%, 100% { background: rgba(255,0,51,.08); }
+  50% { background: rgba(255,0,51,.25); }
+}
+
+.heard-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; opacity: .55; letter-spacing: 3px;
+  margin-bottom: 3px; text-transform: uppercase; font-weight: 700;
+}
+.heard-text {
+  font-size: clamp(11px, 3.5vw, 14px);
+  font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  line-height: 1.2;
+}
+.score-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; margin-top: 3px; opacity: .65;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+
+.row { display: flex; gap: 6px; }
+
+button {
+  border: 1px solid rgba(240,240,240,.25);
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f0f0f0;
+  border-radius: 0; padding: 11px 12px;
+  font-size: 10px; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+  transition: background .1s, border-color .1s;
+}
+button:hover { background: rgba(255,255,255,.1); border-color: rgba(240,240,240,.5); }
+button:active { background: rgba(255,255,255,.18); }
+.btn-listen { flex: 1; }
+.btn-reset { flex: 0 0 auto; padding: 11px 14px; }
+
+.btn-mic {
+  background: #ff0033; color: #000; border: none;
+  padding: 14px; font-size: 12px; letter-spacing: 5px;
+  font-weight: 800; width: 100%;
+  backdrop-filter: none;
+}
+.btn-mic:hover { background: #fff; color: #000; }
+.btn-mic.recording {
+  background: #f0f0f0; color: #000;
+  animation: recPulse .8s infinite;
+}
+@keyframes recPulse {
+  0%, 100% { background: #f0f0f0; }
+  50% { background: #ff0033; }
+}
+
+/* word glitch on fail */
+.glitch { animation: glitch .4s; }
+@keyframes glitch {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) skewX(-2deg); }
+  40% { transform: translateX(6px) skewX(2deg); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ============ START SCREEN ============ */
+.start-screen {
+  position: absolute; inset: 0; background: #000; z-index: 1000;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 28px 22px;
+  transition: opacity .3s, transform .3s;
+}
+.start-screen.hidden { opacity: 0; transform: scale(.98); pointer-events: none; }
+
+.start-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 3px; color: #ff0033;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+}
+.start-meta::after { content: ''; flex: 1; height: 1px; background: #ff0033; }
+
+.start-screen h1 {
+  font-size: clamp(34px, 11vw, 64px); font-weight: 900;
+  letter-spacing: -.04em; line-height: .88;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.start-screen .accent { color: #ff0033; }
+.start-screen .subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; opacity: .65; line-height: 1.5;
+  max-width: 320px; letter-spacing: .5px;
+}
+
+.start-info {
+  border-top: 1px solid #1f1f1f; border-bottom: 1px solid #1f1f1f;
+  padding: 10px 0; margin: 14px 0;
+}
+.start-info .row {
+  display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 1.5px;
+  margin-bottom: 4px; text-transform: uppercase;
+}
+.start-info .row:last-child { margin-bottom: 0; }
+.start-info .key { opacity: .45; }
+
+.start-bouncer-preview {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 8px 0;
+}
+.start-bouncer-preview img {
+  max-height: 100%;
+  max-width: 70%;
+  width: auto;
+  opacity: 0.85;
+  filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.6));
+}
+
+.start-btn {
+  background: #ff0033; color: #000; border: none;
+  padding: 18px 22px; border-radius: 0;
+  font-size: 12px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 4px;
+  cursor: pointer; font-family: inherit; width: 100%;
+  text-align: left; display: flex;
+  justify-content: space-between; align-items: center;
+  transition: background .1s;
+}
+.start-btn:hover { background: #fff; }
+.start-btn .arrow { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+.start-foot {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; opacity: .35;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  margin-top: 10px;
+}
+
+/* ============ PROTOCOL WARNING ============ */
+.protocol-warning {
+  position: absolute; inset: 0; background: #000; z-index: 2000;
+  display: none; flex-direction: column; justify-content: center;
+  padding: 26px 22px; overflow-y: auto;
+}
+.protocol-warning.show { display: flex; }
+.protocol-warning .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 3px; color: #ff0033;
+  margin-bottom: 12px; text-transform: uppercase;
+}
+.protocol-warning h2 {
+  font-size: 24px; margin-bottom: 14px;
+  font-weight: 900; text-transform: uppercase;
+  letter-spacing: -.02em; line-height: 1;
+}
+.protocol-warning p {
+  font-size: 12px; line-height: 1.5; opacity: .7;
+  margin-bottom: 14px;
+}
+.protocol-warning .solution {
+  border-left: 2px solid #ff0033;
+  padding: 8px 0 8px 14px;
+  margin-bottom: 12px;
+}
+.protocol-warning .solution h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: #ff0033;
+  margin-bottom: 6px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.protocol-warning .solution p {
+  font-size: 11px; margin-bottom: 3px; opacity: .85;
+}
+.protocol-warning code {
+  background: #111; padding: 2px 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: #f0f0f0;
+  border: 1px solid #222;
+}
+.protocol-warning .url {
+  font-size: 11px; border-bottom: 1px dashed #555;
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ============ PROTOCOL WARNING ============ -->
+  <div class="protocol-warning" id="protocolWarning">
+    <div class="tag">// ERROR_001 // SECURE_CONTEXT_REQUIRED</div>
+    <h2>Funguje len cez<br>HTTPS / localhost</h2>
+    <p>Otvorila si súbor priamo (file://). Browser z bezpečnostných dôvodov nedá kameru ani mikrofón.</p>
+    <div class="solution">
+      <h3>// 01 — NETLIFY DROP</h3>
+      <p>1. Choď na <span class="url">app.netlify.com/drop</span></p>
+      <p>2. Pretiahni VŠETKY 3 súbory do okna naraz (HTML + 2× PNG)</p>
+      <p>3. Otvor https:// link v Chrome</p>
+    </div>
+    <div class="solution">
+      <h3>// 02 — LOCALHOST</h3>
+      <p>V termináli, v priečinku so súbormi:</p>
+      <p><code>python3 -m http.server 8000</code></p>
+    </div>
+  </div>
+
+  <!-- ============ START SCREEN ============ -->
+  <div class="start-screen" id="startScreen">
+    <div>
+      <div class="start-meta">// TÜRPOLITIK / SYS.001</div>
+      <h1>EIN<span class="accent">/</span>WEIHUNGS<br>PARTY</h1>
+      <p class="subtitle">Biletár počuje. Biletár hodnotí. Biletár rozhodne. Buď ťa pustí — alebo nie.</p>
+
+      <div class="start-info">
+        <div class="row"><span class="key">Slovo</span><span>Die Einweihungsparty</span></div>
+        <div class="row"><span class="key">Türpolitik</span><span>STUROVA 11</span></div>
+        <div class="row"><span class="key">Hodnotenie</span><span>EINLASS / ABGELEHNT</span></div>
+      </div>
+    </div>
+
+    <div class="start-bouncer-preview">
+      <img src="bouncer_closed.png" alt="">
+    </div>
+
+    <div>
+      <button class="start-btn" id="btnStart">
+        <span>STISKNI ŠTART</span>
+        <span class="arrow">→</span>
+      </button>
+      <div class="start-foot">// CHROME / EDGE / KAMERA + MIKROFÓN</div>
+    </div>
+  </div>
+
+  <!-- ============ GAME ============ -->
+  <video id="webcam" autoplay playsinline muted></video>
+  <div class="vignette-top"></div>
+  <div class="vignette-bottom"></div>
+
+  <!-- BOUNCER (always visible, switches state) -->
+  <div class="bouncer-wrap" id="bouncerWrap">
+    <img class="bouncer-img closed" id="bouncerClosed" src="bouncer_closed.png" alt="">
+    <img class="bouncer-img open" id="bouncerOpen" src="bouncer_open.png" alt="">
+  </div>
+
+  <div class="topbar">
+    <div class="rec-group">
+      <div class="rec-dot"></div>
+      <div class="rec-text">REC</div>
+    </div>
+    <div class="counter">VERSUCH <span class="num" id="attempts">01</span></div>
+  </div>
+
+  <div class="word-zone">
+    <div class="label">AUSSPRACHE</div>
+    <div class="word" id="word">DIE EINWEIHUNGS&shy;PARTY</div>
+  </div>
+
+  <!-- VERDICT BANNER -->
+  <div class="verdict-banner" id="verdictBanner">
+    <span class="verdict-text" id="verdictText">EINLASS</span>
+    <span class="verdict-quote" id="verdictQuote">"Komm rein."</span>
+  </div>
+
+  <div class="strobe" id="strobe"></div>
+
+  <div class="panel">
+    <div class="heard" id="heard">
+      <div class="heard-label">// GEHÖRT</div>
+      <div class="heard-text" id="heardText">— STISKNI MIK —</div>
+      <div class="score-line" id="scoreLine"></div>
+    </div>
+
+    <button class="btn-mic" id="btnMic">// SPRICH</button>
+  </div>
+
+</div>
+
+<script>
+const TARGET = "Die Einweihungsparty";
+const TARGET_NORM = "die einweihungsparty";
+
+const FAIL_QUOTES = [
+  '"Heute nicht."',
+  '"Nein."',
+  '"Du kommst hier nicht rein."',
+  '"Geh woanders."',
+  '"Nicht der Look."',
+  '"Sorry. Nein."',
+  '"Niemals."',
+  '"Geh nach Hause."',
+  '"Versuch\'s beim Watergate."',
+  '"Schwach."',
+  '"Du passt nicht zu uns."',
+  '"Nicht heute, Freund."'
+];
+const SUCCESS_QUOTES = [
+  '"Komm rein."',
+  '"Bitte."',
+  '"Tanz gut."',
+  '"Pass auf da drin."',
+  '"Hereinspaziert."',
+  '"Du gehörst dazu."'
+];
+const ALMOST_QUOTES = [
+  '"Knapp."',
+  '"Fast."',
+  '"Nochmal."',
+  '"Schwach. Nochmal."'
+];
+
+let attempts = 1;
+let recognition = null;
+let isRecording = false;
+let stream = null;
+let resetTimer = null;
+let autoMode = false;  // when true, auto-restart listening after each verdict
+
+const $ = id => document.getElementById(id);
+const els = {
+  protocolWarning: $('protocolWarning'),
+  startScreen: $('startScreen'),
+  btnStart: $('btnStart'),
+  webcam: $('webcam'),
+  attempts: $('attempts'),
+  heard: $('heard'),
+  heardText: $('heardText'),
+  scoreLine: $('scoreLine'),
+  btnMic: $('btnMic'),
+  word: $('word'),
+  bouncerWrap: $('bouncerWrap'),
+  verdictBanner: $('verdictBanner'),
+  verdictText: $('verdictText'),
+  verdictQuote: $('verdictQuote'),
+  strobe: $('strobe')
+};
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function setBouncerOpen(open) {
+  if (open) els.bouncerWrap.classList.add('is-open');
+  else els.bouncerWrap.classList.remove('is-open');
+}
+
+function showVerdict(type) {
+  // clear any pending reset
+  if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+
+  els.verdictBanner.classList.remove('show', 'fail', 'success', 'almost');
+  void els.verdictBanner.offsetWidth;
+  els.verdictBanner.classList.add('show', type);
+
+  // bouncer reaction
+  els.bouncerWrap.classList.remove('punch', 'shake');
+  void els.bouncerWrap.offsetWidth;
+
+  if (type === 'success') {
+    setBouncerOpen(true);
+    els.verdictText.textContent = 'EINLASS';
+    els.verdictQuote.textContent = SUCCESS_QUOTES[Math.floor(Math.random() * SUCCESS_QUOTES.length)];
+    els.bouncerWrap.classList.add('punch');
+    flashStrobe('white');
+  } else if (type === 'fail') {
+    setBouncerOpen(false);
+    els.verdictText.textContent = 'ABGELEHNT';
+    els.verdictQuote.textContent = FAIL_QUOTES[Math.floor(Math.random() * FAIL_QUOTES.length)];
+    els.bouncerWrap.classList.add('shake');
+    flashStrobe('red');
+  } else { // almost
+    setBouncerOpen(false);
+    els.verdictText.textContent = 'FAST';
+    els.verdictQuote.textContent = ALMOST_QUOTES[Math.floor(Math.random() * ALMOST_QUOTES.length)];
+    els.bouncerWrap.classList.add('shake');
+  }
+
+  // hide verdict banner after delay AND return bouncer to closed state
+  resetTimer = setTimeout(() => {
+    els.verdictBanner.classList.remove('show');
+    setBouncerOpen(false); // back to default closed gate
+    // auto-restart listening if continuous mode is active
+    if (autoMode && !isRecording) {
+      setTimeout(() => {
+        if (autoMode && !isRecording) startRecording();
+      }, 250);
+    }
+  }, 3000);
+
+  // bouncer speaks the verdict line — small delay so visual lands first
+  setTimeout(() => speakBouncer(els.verdictQuote.textContent), 200);
+}
+
+function flashStrobe(color) {
+  els.strobe.classList.remove('flash-red', 'flash-white');
+  void els.strobe.offsetWidth;
+  els.strobe.classList.add('flash-' + color);
+}
+
+async function startCamera() {
+  if (!window.isSecureContext || !navigator.mediaDevices) {
+    els.protocolWarning.classList.add('show');
+    els.startScreen.classList.add('hidden');
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1920 } },
+      audio: false
+    });
+    els.webcam.srcObject = stream;
+    els.startScreen.classList.add('hidden');
+  } catch (err) {
+    alert('Kamera: ' + err.message + '\n\nPovoľ kameru v prehliadači (ikonka pri URL).');
+  }
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++) {
+      const c = a[i-1] === b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + c);
+    }
+  return dp[m][n];
+}
+
+function similarity(a, b) {
+  const longer = Math.max(a.length, b.length);
+  if (!longer) return 1;
+  return (longer - levenshtein(a, b)) / longer;
+}
+
+function normalize(s) {
+  return s.toLowerCase().replace(/[^a-zäöüß\s]/gi, '').replace(/\s+/g, ' ').trim();
+}
+
+function speakWord() {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(TARGET);
+  u.lang = 'de-DE'; u.rate = 0.85;
+  const v = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('de'));
+  if (v) u.voice = v;
+  window.speechSynthesis.speak(u);
+}
+
+function speakBouncer(text) {
+  if (!('speechSynthesis' in window)) return;
+  // strip quotation marks
+  const clean = text.replace(/["""]/g, '').trim();
+  if (!clean) return;
+
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'de-DE';
+  u.rate = 0.82;     // slower, deliberate
+  u.pitch = 0.55;    // deep, menacing
+  u.volume = 1.0;
+
+  // try to find a male German voice; fall back to any German voice
+  const voices = window.speechSynthesis.getVoices();
+  const malePattern = /male|markus|stefan|klaus|hans|yannick|conrad|reed|deutsch.*male|google.*deutsch/i;
+  let voice = voices.find(v => v.lang.startsWith('de') && malePattern.test(v.name));
+  if (!voice) voice = voices.find(v => v.lang.startsWith('de') && !/female|anna|petra|katja|hedda|steffi/i.test(v.name));
+  if (!voice) voice = voices.find(v => v.lang.startsWith('de'));
+  if (voice) u.voice = voice;
+
+  window.speechSynthesis.speak(u);
+}
+
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'de-DE'; r.continuous = false;
+  r.interimResults = true; r.maxAlternatives = 3;
+  r.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    if (final) evaluateResult(final);
+    else if (interim) els.heardText.textContent = interim.toUpperCase();
+  };
+  r.onerror = (e) => {
+    stopRecording();
+    if (e.error === 'no-speech') {
+      els.heardText.textContent = '— TICHO —';
+      // retry automatically in continuous mode
+      if (autoMode) setTimeout(() => { if (autoMode && !isRecording) startRecording(); }, 600);
+    } else if (e.error === 'not-allowed') {
+      autoMode = false;
+      els.heardText.textContent = '— POVOĽ MIKROFÓN —';
+    } else {
+      els.heardText.textContent = '— ' + e.error.toUpperCase() + ' —';
+      if (autoMode) setTimeout(() => { if (autoMode && !isRecording) startRecording(); }, 800);
+    }
+  };
+  r.onend = () => { if (isRecording) stopRecording(); };
+  return r;
+}
+
+function startRecording() {
+  if (!recognition) {
+    recognition = initRecognition();
+    if (!recognition) {
+      els.heardText.textContent = '— LEN CHROME / EDGE —';
+      return;
+    }
+  }
+  try {
+    window.speechSynthesis.cancel();
+    autoMode = true; // enable continuous listening loop
+    els.heard.className = 'heard listening';
+    els.heardText.textContent = '// POČÚVAM...';
+    els.scoreLine.textContent = '';
+    els.verdictBanner.classList.remove('show');
+    els.btnMic.classList.add('recording');
+    els.btnMic.textContent = '// STOP AUTO';
+    isRecording = true;
+    recognition.start();
+  } catch (err) { stopRecording(); }
+}
+
+function stopRecording() {
+  isRecording = false;
+  els.btnMic.classList.remove('recording');
+  els.btnMic.textContent = '// SPRICH';
+  if (recognition) try { recognition.stop(); } catch (e) {}
+}
+
+function evaluateResult(transcript) {
+  stopRecording();
+  const said = normalize(transcript);
+  const target = normalize(TARGET_NORM);
+  const sim = similarity(said, target);
+  const percent = Math.round(sim * 100);
+
+  els.heardText.textContent = '"' + transcript.trim().toUpperCase() + '"';
+
+  if (sim >= 0.92) {
+    els.heard.className = 'heard success';
+    els.scoreLine.textContent = '// MATCH ' + percent + '% // EINLASS';
+    showVerdict('success');
+  } else if (sim >= 0.75) {
+    els.heard.className = 'heard';
+    els.scoreLine.textContent = '// MATCH ' + percent + '% // FAST';
+    showVerdict('almost');
+    els.word.classList.add('glitch');
+    setTimeout(() => els.word.classList.remove('glitch'), 400);
+  } else {
+    els.heard.className = 'heard fail';
+    els.scoreLine.textContent = '// MATCH ' + percent + '% // ABGELEHNT';
+    showVerdict('fail');
+    els.word.classList.add('glitch');
+    setTimeout(() => els.word.classList.remove('glitch'), 400);
+  }
+
+  attempts++;
+  els.attempts.textContent = pad(attempts);
+}
+
+function reset() {
+  autoMode = false;
+  if (isRecording) stopRecording();
+  attempts = 1;
+  els.attempts.textContent = pad(attempts);
+  els.heard.className = 'heard';
+  els.heardText.textContent = '— STISKNI MIK —';
+  els.scoreLine.textContent = '';
+  els.verdictBanner.classList.remove('show');
+  setBouncerOpen(false);
+}
+
+els.btnStart.addEventListener('click', startCamera);
+els.btnMic.addEventListener('click', () => {
+  if (isRecording) {
+    autoMode = false; // user explicitly stopping the loop
+    stopRecording();
+  } else {
+    startRecording();
+  }
+});
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+window.addEventListener('load', () => {
+  if (!window.isSecureContext) {
+    els.protocolWarning.classList.add('show');
+    els.startScreen.classList.add('hidden');
+  }
+});
+</script>
+
+</body>
+</html>
